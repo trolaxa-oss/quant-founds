@@ -1,3 +1,4 @@
+from .ai_intel import AiIntelligence
 from .data_engine import DataEngine
 from .liquidity_intel import LiquidityIntelligence
 from .market_intel import MarketIntelligence

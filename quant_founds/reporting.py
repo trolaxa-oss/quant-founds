@@ -73,3 +73,80 @@ def monte_carlo_drawdown(pnls: list[float], runs: int = 500, seed: int = 7) -> d
         return round(mdds[min(len(mdds) - 1, int(p * len(mdds)))], 2)
 
     return {"mdd_p50": pct(0.5), "mdd_p90": pct(0.9), "mdd_p95": pct(0.95)}
+
+
+def render_html_report(trades: list, report: dict, path: str) -> str:
+    """Standalone HTML performance report (blueprint 10/18) - no dependencies."""
+    import html
+    import os
+
+    def esc(v):
+        return html.escape(str(v))
+
+    rows = "".join(
+        "<tr>"
+        f"<td>{esc(getattr(t, 'trade_id', '')[:8])}</td>"
+        f"<td>{esc(getattr(t, 'side', getattr(t, 'symbol', '')))}</td>"
+        f"<td>{esc(getattr(t, 'entry_time', ''))}</td>"
+        f"<td>{esc(getattr(t, 'entry_price', ''))}</td>"
+        f"<td>{esc(getattr(t, 'quantity', ''))}</td>"
+        f"<td>{esc(getattr(t, 'realized_pnl', ''))}</td>"
+        f"<td>{esc(';'.join(getattr(t, 'exit_reasons', [])))}</td>"
+        "</tr>"
+        for t in trades
+    )
+    if rows:
+        trades_block = f"""
+        <h2>Trades</h2>
+        <table>
+          <tr><th>id</th><th>side</th><th>entry_time</th><th>entry</th>
+              <th>qty</th><th>pnl</th><th>exits</th></tr>
+          {rows}
+        </table>"""
+    else:
+        trades_block = "<p>No trades.</p>"
+
+    equity = report.get("equity_curve") or []
+    svg = ""
+    if len(equity) >= 2:
+        w, hgt, pad = 720, 220, 12
+        lo, hi = min(equity), max(equity)
+        span = (hi - lo) or 1.0
+
+        def px(i, v):
+            x = pad + (w - 2 * pad) * i / (len(equity) - 1)
+            y = hgt - pad - (hgt - 2 * pad) * (v - lo) / span
+            return f"{x:.1f},{y:.1f}"
+
+        pts = " ".join(px(i, v) for i, v in enumerate(equity))
+        svg = f"""
+        <h2>Equity curve</h2>
+        <svg width="{w}" height="{hgt}" role="img">
+          <polyline fill="none" stroke="#1a7f37" stroke-width="2" points="{pts}"/>
+        </svg>"""
+
+    metrics_rows = "".join(
+        f"<tr><th>{esc(k)}</th><td>{esc(v)}</td></tr>"
+        for k, v in report.items()
+        if not isinstance(v, (list, dict))
+    )
+
+    page = f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>QUANT FOUNDS report</title>
+<style>
+ body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #222; }}
+ table {{ border-collapse: collapse; margin: 0.5rem 0 1.5rem; }}
+ td, th {{ border: 1px solid #ccc; padding: 4px 10px; font-size: 0.9rem; }}
+ h1 {{ margin-bottom: 0.2rem; }}
+ h2 {{ margin-top: 1.5rem; }}
+</style></head><body>
+<h1>QUANT FOUNDS — performance report</h1>
+<table>{metrics_rows}</table>
+{svg}
+{trades_block}
+</body></html>"""
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as fh:
+        fh.write(page)
+    return page
