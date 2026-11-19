@@ -163,7 +163,7 @@ class Backtester:
             self.journal.log_decision(decision)
 
             if verbose and cfg.debug and decision:
-                from dashboard import render_snapshot
+                from quant_founds.quant_stat import render_snapshot
                 print(render_snapshot(ctx, results, self.account, broker.open, decision))
 
             self.account.peak_equity = max(self.account.peak_equity, self.account.equity)
@@ -182,6 +182,11 @@ class Backtester:
             "entry_threshold": cfg.scoring.entry_threshold,
         }
         self.journal.write_summary(report)
+        from quant_founds.reporting import render_html_report
+        from pathlib import Path as _Path
+
+        self.report_html_path = str(_Path(self.journal.run_dir) / "report.html")
+        render_html_report(trades, report, self.report_html_path)
         return BacktestResult(trades, report, decisions_count, self.account, self.journal)
 
     @staticmethod
