@@ -1,0 +1,10 @@
+# تداول حي على Binance بدون مفتاح — Klines عامة فقط.
+# يعمل من config/default.toml ثم يتجاوز قسم data فقط. لا أسرار داخل ملفات الإعدادات.
+
+[data]
+symbol = "BTCUSDT"
+timeframe = "M1"
+higher_timeframes = ["M15", "H1"]
+source_mode = "binance"
+binance_base_url = "https://api.binance.com"
+csv_path = ""

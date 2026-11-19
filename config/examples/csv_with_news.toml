@@ -1,0 +1,17 @@
+# تشغيل ورقي كامل من CSV مع تقويم اقتصادي يمنع الدخول قرب الأخبار عالية الأثر.
+# استخدمه مع: python scripts/live_watch.py --provider csv --csv data/your.csv --trade \
+#              --config config/examples/csv_with_news.toml
+
+[data]
+symbol = "EURUSD"
+timeframe = "M15"
+higher_timeframes = ["H1", "H4"]
+source_mode = "csv"
+csv_path = "data/your.csv"
+
+[news]
+enabled = true
+block_minutes_before = 30
+block_minutes_after = 30
+block_impacts = ["high"]
+events_csv = "data/events_sample.csv"

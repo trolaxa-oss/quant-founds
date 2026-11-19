@@ -1,0 +1,11 @@
+# بيانات من منصة MT5 عبر جسر محلي (loopback فقط) مع رمز تحقق من متغير البيئة.
+# شغّل الجسر أولاً:  QF_BRIDGE_TOKEN=سرّك python scripts/mt5_bridge_server.py
+# ثم صدّر الرمز نفسه لعملية المراقبة:  export QF_BRIDGE_TOKEN=سرّك
+
+[data]
+symbol = "EURUSD"
+timeframe = "M15"
+higher_timeframes = ["H1", "H4"]
+source_mode = "mt5_bridge"
+bridge_url = "http://127.0.0.1:8770"
+bridge_token_env = "QF_BRIDGE_TOKEN"
