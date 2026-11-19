@@ -12,9 +12,10 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
-sys.path.insert(0, __file__.rsplit("/", 2)[0])
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from quant_founds.core.config import Config
 from quant_founds.providers import provider_from_config
