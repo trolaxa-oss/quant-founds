@@ -79,7 +79,8 @@ class FilterChain:
         add("spread", spread_ok, "within_limits", en.get("spread", True))
 
         mtf_state = getattr(mtf, "state", "unavailable")
-        mtf_ok = mtf_state in ("aligned_buy", "aligned_sell", "partial")
+        mtf_ok = mtf_state in ("aligned_buy", "aligned_sell", "partial") \
+            or mtf_state == "unavailable"
         add("mtf", mtf_ok, f"mtf={mtf_state}", en.get("mtf", True))
 
         regime = (getattr(market, "extras", {}).get("regime") or "unavailable") if market else "unavailable"
