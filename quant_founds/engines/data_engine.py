@@ -77,11 +77,16 @@ def load_csv_ohlcv(path: str, has_volume: bool = True):
 
 def _parse_ts(raw: str):
     from datetime import datetime, timezone
+    raw = raw.strip()
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        pass
     candidates = [
         "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M",
         "%Y-%m-%dT%H:%M", "%Y-%m-%d",
     ]
-    raw = raw.replace("Z", "")
     for fmt in candidates:
         try:
             dt = datetime.strptime(raw, fmt)
