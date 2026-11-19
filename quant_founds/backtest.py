@@ -26,7 +26,9 @@ from quant_founds.engines.orderflow_intel import OrderFlowIntelligence
 from quant_founds.engines.smc_intel import SmcIntelligence
 from quant_founds.execution import BrokerConfig, PaperBroker
 from quant_founds.journal import Journal
-from quant_founds.reporting import performance_report, walk_forward_split
+from quant_founds.engines.news_intel import NewsIntelligence
+from quant_founds.reporting import (monte_carlo_drawdown, performance_report,
+                                    walk_forward_report)
 from quant_founds.risk_engine import RiskEngine
 from quant_founds.sessions import SessionEngine, assert_closed_only
 
@@ -44,6 +46,8 @@ class Backtester:
     def __init__(self, cfg: Config, events=None, run_dir: str = "runs/latest",
                  initial_balance: float = 10_000.0):
         self.cfg = cfg
+        if events is None and cfg.news.events_csv:
+            events = NewsIntelligence.from_csv(cfg.news.events_csv)
         self.events = events
         self.initial_balance = initial_balance
         self.account = Account(balance=initial_balance, equity=initial_balance,
@@ -172,10 +176,10 @@ class Backtester:
         report = performance_report(trades, initial_balance=self.initial_balance)
         report["decisions_count"] = decisions_count
         report["n_bars"] = len(candles)
-        report["walk_forward"] = [
-            {"train": tr, "test": te}
-            for tr, te in walk_forward_split(len(candles), folds=3)
-        ]
+        report["monte_carlo"] = monte_carlo_drawdown(
+            [t.realized_pnl for t in trades])
+        report["walk_forward"] = walk_forward_report(
+            trades, [c.timestamp for c in candles], folds=3)
         report["config"] = {
             "symbol": cfg.data.symbol,
             "timeframe": cfg.data.timeframe,

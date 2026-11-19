@@ -76,7 +76,18 @@ class LiveWatcher:
         self.orderflow = OrderFlowIntelligence()
         self.smc = SmcIntelligence()
         self.mtf = MultiTimeframeEngine(cfg.data.higher_timeframes)
-        self.news = NewsIntelligence()
+        events = None
+        if cfg.news.events_csv:
+            try:
+                events = NewsIntelligence.from_csv(cfg.news.events_csv)
+            except (OSError, KeyError, ValueError) as exc:
+                print(f"news events_csv not loadable ({exc}) - running without events")
+        self.news = NewsIntelligence(
+            events=events,
+            block_minutes_before=cfg.news.block_minutes_before,
+            block_minutes_after=cfg.news.block_minutes_after,
+            block_impacts=cfg.news.block_impacts,
+        )
         self.ai = AiIntelligence()
         self.sessions = SessionEngine(cfg.sessions)
         self.signals = SignalDecisionEngine(cfg)

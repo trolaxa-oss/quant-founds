@@ -1,8 +1,22 @@
 """Quant Statistical Engine (09) - performance metrics, walk-forward, Monte Carlo."""
 from __future__ import annotations
 
+import math
 import random
-from statistics import fmean
+from statistics import fmean, pstdev
+
+
+def sharpe_sortino(returns: list[float]) -> tuple:
+    """Per-trade reward/risk ratios (blueprint 15.2); None when undefined."""
+    if not returns:
+        return None, None
+    mu = fmean(returns)
+    sd = pstdev(returns)
+    sharpe = round(mu / sd, 3) if sd > 0 else None
+    downside = math.sqrt(fmean([r * r for r in returns if r < 0])) \
+        if any(r < 0 for r in returns) else 0.0
+    sortino = round(mu / downside, 3) if downside > 0 else None
+    return sharpe, sortino
 
 
 def performance_report(trades: list, initial_balance: float = 10_000.0) -> dict:
@@ -23,6 +37,8 @@ def performance_report(trades: list, initial_balance: float = 10_000.0) -> dict:
     for v in curve:
         peak = max(peak, v)
         mdd = max(mdd, (peak - v) / peak if peak > 0 else 0.0)
+    returns = [p / initial_balance for p in pnls]
+    sharpe, sortino = sharpe_sortino(returns)
     return {
         "n_trades": len(trades),
         "win_rate": round(len(wins) / len(pnls), 3),
@@ -30,9 +46,14 @@ def performance_report(trades: list, initial_balance: float = 10_000.0) -> dict:
         "gross_loss": round(gross_loss, 2),
         "profit_factor": round(gross_profit / gross_loss, 3) if gross_loss else None,
         "expectancy": round(fmean(pnls), 2),
+        "avg_win": round(fmean(wins), 2) if wins else None,
+        "avg_loss": round(fmean(losses), 2) if losses else None,
+        "total_costs": round(sum(getattr(t, "costs", 0.0) or 0.0 for t in trades), 2),
         "total_pnl": round(sum(pnls), 2),
         "final_equity": round(equity, 2),
         "max_drawdown_pct": round(mdd * 100, 2),
+        "sharpe": sharpe,
+        "sortino": sortino,
         "equity_curve": [round(v, 2) for v in curve],
     }
 
@@ -49,6 +70,31 @@ def walk_forward_split(n_bars: int, folds: int = 3, train_frac: float = 0.7):
         if train_end - start < 5 or end - train_end < 3:
             continue
         yield list(range(start, train_end)), list(range(train_end, end))
+
+
+def walk_forward_report(trades: list, timestamps: list, folds: int = 3) -> dict:
+    """Per-test-window performance (blueprint 15.2/16). The system is rule-based
+    (no fitted parameters), so windows are evaluated as-is for stability."""
+    windows = []
+    for train, test in walk_forward_split(len(timestamps), folds=folds):
+        start = timestamps[test[0]]
+        end = timestamps[test[-1]]
+        in_window = [t for t in trades
+                     if getattr(t, "closed_time", None)
+                     and start <= t.closed_time <= end]
+        rep = performance_report(in_window)
+        rep.pop("equity_curve", None)
+        windows.append({
+            "train_bars": [train[0], train[-1]],
+            "test_bars": [test[0], test[-1]],
+            "metrics": rep,
+        })
+    profitable = sum(1 for w in windows
+                     if w["metrics"].get("n_trades", 0)
+                     and (w["metrics"].get("total_pnl") or 0) > 0)
+    return {"windows": windows, "n_windows": len(windows),
+            "profitable_windows": profitable,
+            "stability": round(profitable / len(windows), 3) if windows else None}
 
 
 def monte_carlo_drawdown(pnls: list[float], runs: int = 500, seed: int = 7) -> dict:

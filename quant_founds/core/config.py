@@ -132,4 +132,46 @@ class Config:
                 setattr(cfg, name, obj)
         if "debug" in raw:
             cfg.debug = bool(raw["debug"])
+        errors = cfg.validate()
+        if errors:
+            raise ValueError("invalid config: " + "; ".join(errors))
         return cfg
+
+    def validate(self) -> list[str]:
+        """Sanity checks (blueprint 17): returns a list of error strings."""
+        errors: list[str] = []
+        if not (0 < self.risk.risk_per_trade_pct <= 0.05):
+            errors.append("risk.risk_per_trade_pct must be in (0, 0.05]")
+        if self.risk.daily_loss_limit_pct <= 0 or self.risk.weekly_loss_limit_pct <= 0:
+            errors.append("risk daily/weekly loss limits must be positive")
+        if not (0 < self.risk.max_drawdown_stop_pct <= 1):
+            errors.append("risk.max_drawdown_stop_pct must be in (0, 1]")
+        if self.risk.max_consecutive_losses < 1 or self.risk.max_open_positions < 1:
+            errors.append("risk limits must allow at least one loss/position")
+        if self.risk.min_risk_reward < 1:
+            errors.append("risk.min_risk_reward must be >= 1")
+        if self.risk.point_value <= 0 or self.risk.contract_size <= 0:
+            errors.append("risk point_value/contract_size must be positive")
+        if not (0 <= self.scoring.watch_threshold <= self.scoring.entry_threshold <= 100):
+            errors.append("scoring thresholds must satisfy 0 <= watch <= entry <= 100")
+        if any(w < 0 for w in self.scoring.weights.values()):
+            errors.append("scoring weights must be non-negative")
+        total = sum(self.scoring.weights.values())
+        if abs(total - 100.0) > 0.5:
+            errors.append(f"scoring weights must sum to 100 (got {total})")
+        if not (0 < self.execution.partial_tp1_fraction <= 1):
+            errors.append("execution.partial_tp1_fraction must be in (0, 1]")
+        if self.execution.trailing_atr_multiple <= 0:
+            errors.append("execution.trailing_atr_multiple must be positive")
+        if self.execution.signal_validity_bars < 1:
+            errors.append("execution.signal_validity_bars must be >= 1")
+        if self.data.timeframe not in {"M1", "M5", "M15", "M30", "H1", "H4", "D1"}:
+            errors.append(f"data.timeframe '{self.data.timeframe}' is not supported")
+        for tf in self.data.higher_timeframes:
+            if tf not in {"M5", "M15", "M30", "H1", "H4", "D1"}:
+                errors.append(f"data.higher_timeframes entry '{tf}' is not supported")
+        if self.data.max_gap_bars < 0 or self.backtest.warmup_bars < 0:
+            errors.append("data.max_gap_bars and backtest.warmup_bars must be >= 0")
+        if self.news.block_minutes_before < 0 or self.news.block_minutes_after < 0:
+            errors.append("news block minutes must be >= 0")
+        return errors
