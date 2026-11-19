@@ -33,6 +33,13 @@ def main() -> None:
                     help="run the full paper pipeline (plan -> risk -> paper fills)")
     ap.add_argument("--balance", type=float, default=10_000.0)
     ap.add_argument("--run-dir", default="")
+    ap.add_argument("--ai", action="store_true",
+                    help="enable the online AI model: learns from closed paper \
+trades and gates new entries once trained (min 30 updates default)")
+    ap.add_argument("--dashboard", action="store_true",
+                    help="serve a local HTML dashboard on 127.0.0.1")
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int, default=8771)
     ap.add_argument("--once", action="store_true", help="process once and exit")
     ap.add_argument("--config", default="config/default.toml")
     args = ap.parse_args()
@@ -56,7 +63,16 @@ def main() -> None:
         kwargs["run_dir"] = args.run_dir
     if args.trade:
         kwargs["initial_balance"] = args.balance
+        if args.ai:
+            kwargs["ai_gate"] = True
     engine = runner(cfg, provider, **kwargs)
+
+    if args.dashboard and args.trade:
+        from quant_founds.dashboard_live import start_dashboard
+
+        server = start_dashboard(engine, host=args.host, port=args.port)
+        print(f"dashboard: http://{args.host}:{server.server_address[1]} "
+              "(loopback only)")
 
     if args.once:
         for d in engine.run_once():
