@@ -1,5 +1,5 @@
 # QUANT FOUNDS — نظام تحليل تداول كمّي متعدد المحركات
-[![tests](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml/badge.svg)](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml) [![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/trolaxa-oss/quant-founds/releases)
+[![tests](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml/badge.svg)](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml) [![Release](https://img.shields.io/badge/release-v1.1.0-blue)](https://github.com/trolaxa-oss/quant-founds/releases)
 
 الهيكل الأولي (Skeleton) لمشروع **QUANT FOUNDS** بلغة بايثون، مبني حسب وثيقة المخطط (Blueprint) الإصدار 1.0. المشروع يعتمد على **مكتبة بايثون القياسية فقط** (بدون أي اعتماديات خارجية).
 
