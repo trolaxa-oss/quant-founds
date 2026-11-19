@@ -2,6 +2,11 @@
 
 يعتمد التنسيق على [Keep a Changelog](https://keepachangelog.com/) مع تسمية إصدارات بهيئة `MAJOR.MINOR.PATCH`.
 
+## [غير مُصدَّر] — Unreleased
+
+### أضيف
+- مزوّد تقويم اقتصادي مباشر عبر واجهة عامة بلا مفتاح (`quant_founds/providers/calendar.py`) + أمر سحب `scripts/fetch_calendar.py` يكتب CSV متواقفًا مع `news.events_csv` (6 اختبارات جديدة).
+
 ## [1.0.0] — 2026-11-19
 
 أول إصدار كامل مطابق لمخطط المشروع (الإصدار 1.0) — Python 3.11+ بمكتبة قياسية فقط.

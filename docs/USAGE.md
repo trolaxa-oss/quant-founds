@@ -101,6 +101,9 @@ python scripts/live_watch.py --provider binance --symbol ETHUSDT --timeframe M5 
 
 ضَع ملفًا بأعمدة `timestamp,currency,impact,name` (مثال جاهز: `data/events_sample.csv`) وأشر إليه في الإعدادات — راجع مثال [config/examples/csv_with_news.toml](../config/examples/csv_with_news.toml). يُحجب الدخول داخل نافذة الخبر (`block_minutes_before/after`) للأثر المحدد (`block_impacts`).
 
+أو اسحب التقويم مباشرًا من واجهة عامة بلا مفتاح (Stdlib:
+`python scripts/fetch_calendar.py --out data/calendar.csv`) وكرّره أسبوعيًا للتحديث.
+
 ## 8. جولات التقييم (Walk-Forward) والسحب (Monte-Carlo)
 
 تُحتسب تلقائيًا في كل تشغيل backtest وتظهر في `summary.json` و`report.html`:
@@ -123,7 +126,7 @@ watcher.process_bar(candle)   # شمعة مغلقة فقط — تخالفها ب
 ## 10. الاختبارات
 
 ```bash
-python -m unittest discover -s tests   # 78 اختبارًا (تخطٍ محتمل واحد لمزوّد شبكي)
+python -m unittest discover -s tests   # 84 اختبارًا (تخطٍ محتمل واحد لمزوّد شبكي)
 ```
 
 ## 11. مشكلات شائعة
