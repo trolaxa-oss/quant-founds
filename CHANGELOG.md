@@ -2,7 +2,7 @@
 
 يعتمد التنسيق على [Keep a Changelog](https://keepachangelog.com/) مع تسمية إصدارات بهيئة `MAJOR.MINOR.PATCH`.
 
-## [غير مُصدَّر] — Unreleased
+## [1.1.0] — 2026-11-19
 
 ### أضيف
 - مزوّد تقويم اقتصادي مباشر عبر واجهة عامة بلا مفتاح (`quant_founds/providers/calendar.py`) + أمر سحب `scripts/fetch_calendar.py` يكتب CSV متواقفًا مع `news.events_csv` (6 اختبارات جديدة).
