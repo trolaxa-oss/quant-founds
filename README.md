@@ -62,6 +62,35 @@ python3 -m unittest discover -s tests
 
 مسار الإشارة: `WATCH → SETUP → CONFIRMED → ENTRY_READY → ACTIVE → EXITED` (أو `INVALIDATED/EXPIRED`). أي فلتر اتفاق صعب (Hard Failure) يمنع القرار فوراً مع تسجيل السبب.
 
+## ربط بيانات حقيقية (منصات §12)
+
+ثلاثة موفّرين جاهزين بتبديل سطر واحد من الإعدادات:
+
+| الموفّر | الاستخدام | ملاحظات |
+|---|---|---|
+| `csv` | ملفات OHLCV محلية | الافتراضي — بدون إنترنت |
+| `binance` | واجهة API العامة للعملات الرقمية | بدون مفتاح API، stdlib فقط |
+| `mt5_bridge` | فوركس عبر MetaTrader5 | يشغّل جسراً محلياً على جهاز فيه MT5 |
+
+```toml
+[data]
+source_mode = "binance"        # أو "csv" أو "mt5_bridge"
+symbol = "BTCUSDT"
+timeframe = "M15"
+```
+
+```bash
+# سحب بيانات حقيقية إلى CSV ثم تشغيل باكتيست عليها
+python3 scripts/fetch_data.py --provider binance --symbol BTCUSDT --timeframe M15 --bars 3000
+python3 scripts/run_backtest.py --csv data/BTCUSDT_M15.csv
+
+# فوركس: شغّل الجسر على جهازك (حيث MT5 مثبّت) — loopback فقط
+python3 scripts/mt5_bridge_server.py            # + QF_BRIDGE_TOKEN اختيارياً
+python3 scripts/fetch_data.py --provider mt5_bridge --symbol EURUSD --timeframe M15 --bars 3000
+```
+
+قاعدة عدم إعادة الرسم مطبقة على المصدر نفسه: يُسقِط حالاً أي شمعة غير مغلقة.
+
 ## الاستخدام كمرجع برمجي
 
 ```python
@@ -78,6 +107,7 @@ print(result.report["win_rate"], result.report["profit_factor"])
 ## حالة التنفيذ (مخطط المراحل §14)
 
 - ✔ المرحلة 0: هيكل المشروع والواجهة الموحدة والإعدادات.
+- ✔ موفّرات البيانات الحقيقية: csv / binance (عام) / جسر MT5 محلي مع مصادقة توكن وعدم تمرير الشموع الحية
 - ✔ المراحل 1–7: المحركات التحليلية، طبقة القرار، المخاطر، التنفيذ، الجلسات، الفلاتر، لوحة العرض، التنبيهات، والتقييم الإحصائي.
 - ✔ الاختبارات: 34 اختباراً (وحدات + smoke) تشمل: جودة البيانات، أولوية SL في الشموع الملتبسة، حد الخسارة اليومي، Kill-Switch، عدم وجود قرار قبل فترة التهيئة.
 - ○ قادم: ربط بيانات حقيقية (MT5/cTrader/Bridge)، محرك AI عند توفر موديل، واجهات رسومية.

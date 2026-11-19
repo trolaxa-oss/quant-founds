@@ -15,6 +15,9 @@ class DataConfig:
     source_mode: str = "csv"
     csv_path: str = "data/sample_EURUSD_M15.csv"
     max_gap_bars: int = 3
+    binance_base_url: str = "https://api.binance.com"
+    bridge_url: str = "http://127.0.0.1:8770"
+    bridge_token_env: str = "QF_BRIDGE_TOKEN"
 
 
 @dataclass

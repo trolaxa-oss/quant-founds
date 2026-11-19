@@ -8,6 +8,10 @@ higher_timeframes = ["H1", "H4"]
 source_mode = "csv"
 csv_path = "data/sample_EURUSD_M15.csv"
 max_gap_bars = 3
+# provider = "csv" | "binance" | "mt5_bridge"  (source_mode)
+binance_base_url = "https://api.binance.com"
+bridge_url = "http://127.0.0.1:8770"
+bridge_token_env = "QF_BRIDGE_TOKEN"
 
 [scoring]
 watch_threshold = 55.0
