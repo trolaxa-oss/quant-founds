@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime
 
 from quant_founds.alerts import AlertEngine
 from quant_founds.core.config import Config
@@ -95,7 +96,9 @@ class LiveWatcher:
         self.run_dir = run_dir
         self._last_ai_features: dict | None = None
         self.journal_path = os.path.join(run_dir, "decisions.jsonl")
+        self.state_path = os.path.join(run_dir, "runtime_state.json")
         os.makedirs(run_dir, exist_ok=True)
+        self._restore_watermark()
 
     def engines(self):
         return [self.data_engine, self.market, self.liquidity, self.orderflow,
@@ -108,6 +111,25 @@ class LiveWatcher:
             if minutes:
                 out[tf] = resample_htf(candles, minutes)
         return out
+
+    def _restore_watermark(self) -> None:
+        try:
+            with open(self.state_path) as fh:
+                raw = json.load(fh)
+            ts = raw.get("last_bar_time")
+            if ts:
+                self.last_bar_time = datetime.fromisoformat(ts)
+        except (OSError, ValueError):
+            pass
+
+    def _save_watermark(self) -> None:
+        if self.last_bar_time is None:
+            return
+        tmp = self.state_path + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump({"last_bar_time": self.last_bar_time.isoformat(),
+                       "n_bars_seen": self.n_bars_seen}, fh)
+        os.replace(tmp, self.state_path)
 
     def run_once(self) -> list:
         candles = self.provider.fetch(self.cfg.data.symbol,
@@ -128,6 +150,7 @@ class LiveWatcher:
                     SignalState.WATCH, SignalState.SETUP,
                     SignalState.CONFIRMED, SignalState.ACTIVE):
                 fired.append(decision)
+        self._save_watermark()
         return fired
 
     def _analyze(self, candle, closed_candles, htf: dict):

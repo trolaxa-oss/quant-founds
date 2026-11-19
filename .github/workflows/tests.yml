@@ -31,6 +31,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Deterministic backtest round-trip
         run: python scripts/run_backtest.py --seed-data --out runs/smoke
+      - name: Live pipeline round-trip (csv, once)
+        run: python scripts/live_watch.py --provider csv --csv data/sample_EURUSD_M15.csv --once --run-dir runs/smoke_live
       - name: Assert report artifacts exist
         run: |
           python - <<'PY'
@@ -50,4 +52,18 @@ jobs:
               rows = fh.read().strip().splitlines()
           assert len(rows) >= 1, "empty trades.csv"
           print("smoke ok:", len(rows) - 1, "trades")
+          PY
+      - name: Assert live artifacts exist
+        run: |
+          python - <<'PY'
+          import json, os
+
+          base = "runs/smoke_live"
+          assert os.path.exists(os.path.join(base, "runtime_state.json")), "missing runtime state"
+          with open(os.path.join(base, "runtime_state.json")) as fh:
+              state = json.load(fh)
+          assert state.get("last_bar_time"), "empty watermark"
+          with open(os.path.join(base, "decisions.jsonl")) as fh:
+              assert sum(1 for _ in fh) > 0, "empty decisions journal"
+          print("live smoke ok:", state["n_bars_seen"], "bars processed")
           PY
