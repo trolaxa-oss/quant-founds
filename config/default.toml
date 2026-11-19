@@ -1,0 +1,84 @@
+[default]
+debug = false
+
+[data]
+symbol = "EURUSD"
+timeframe = "M15"
+higher_timeframes = ["H1", "H4"]
+source_mode = "csv"
+csv_path = "data/sample_EURUSD_M15.csv"
+max_gap_bars = 3
+
+[scoring]
+watch_threshold = 55.0
+entry_threshold = 70.0
+
+[scoring.weights]
+trend = 15.0
+structure = 15.0
+liquidity = 20.0
+orderflow = 15.0
+momentum_volatility = 10.0
+mtf = 10.0
+context = 5.0
+risk_reward = 10.0
+
+[risk]
+risk_per_trade_pct = 0.005
+daily_loss_limit_pct = 0.02
+weekly_loss_limit_pct = 0.05
+max_drawdown_stop_pct = 0.10
+max_consecutive_losses = 4
+cooldown_bars_after_losses = 10
+max_open_positions = 1
+min_risk_reward = 1.5
+point_value = 1.0
+contract_size = 1.0
+
+[execution]
+spread = 0.00010
+slippage = 0.00005
+partial_tp1_fraction = 0.5
+move_be_after_tp1 = true
+enable_trailing = true
+trailing_atr_multiple = 2.0
+signal_validity_bars = 8
+
+[sessions]
+timezone_offset_hours = 0.0
+enabled = true
+asia = [0.0, 9.0]
+london = [7.0, 16.0]
+new_york = [12.0, 21.0]
+
+[news]
+enabled = true
+block_minutes_before = 30
+block_minutes_after = 30
+block_impacts = ["high"]
+events_csv = ""
+
+[filters]
+min_volume_ratio = 0.3
+max_volume_ratio = 6.0
+atr_min_pct = 0.0002
+atr_max_pct = 0.03
+min_distance_to_zone_atr = 0.2
+
+[filters.enabled]
+trend = true
+volume = true
+volatility = true
+liquidity = false
+momentum = false
+structure = false
+session = false
+news = true
+spread = true
+mtf = false
+chop = false
+risk_reward = true
+data_quality = true
+
+[backtest]
+warmup_bars = 60
