@@ -136,6 +136,35 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("market", watcher._last_results)
         shutil.rmtree("runs/_test_watch_rt", ignore_errors=True)
 
+    def test_watermark_survives_process_restart(self):
+        shutil.rmtree("runs/_test_wm", ignore_errors=True)
+        cfg = self._config()
+        candles = make_series(160)
+        first = LiveWatcher(cfg, fake_provider(candles),
+                            run_dir="runs/_test_wm",
+                            notifiers=self._notifiers())
+        first.run_once()
+        self.assertTrue(os.path.exists("runs/_test_wm/runtime_state.json"))
+
+        second = LiveWatcher(cfg, fake_provider(candles),
+                             run_dir="runs/_test_wm",
+                             notifiers=self._notifiers())
+        self.assertEqual(second.last_bar_time, candles[-1].timestamp)
+        self.assertEqual(second.run_once(), [])
+        self.assertEqual(second.n_bars_seen, 0)
+
+        extra = make_series(40, seed=8)
+        shift = (candles[-1].timestamp + timedelta(minutes=15)) - extra[0].timestamp
+        extra = [Candle(c.timestamp + shift, c.open, c.high, c.low,
+                        c.close, c.volume) for c in extra]
+        candles2 = candles + extra
+        third = LiveWatcher(cfg, fake_provider(candles2),
+                            run_dir="runs/_test_wm",
+                            notifiers=self._notifiers())
+        third.run_once()
+        self.assertEqual(third.n_bars_seen, 40)
+        shutil.rmtree("runs/_test_wm", ignore_errors=True)
+
 
 class NotifyTests(unittest.TestCase):
     def test_build_from_env_console_only(self):

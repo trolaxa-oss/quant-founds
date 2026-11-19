@@ -126,7 +126,7 @@ watcher.process_bar(candle)   # شمعة مغلقة فقط — تخالفها ب
 ## 10. الاختبارات
 
 ```bash
-python -m unittest discover -s tests   # 84 اختبارًا (تخطٍ محتمل واحد لمزوّد شبكي)
+python -m unittest discover -s tests   # 85 اختبارًا (تخطٍ محتمل واحد لمزوّد شبكي)
 ```
 
 ## 11. مشكلات شائعة

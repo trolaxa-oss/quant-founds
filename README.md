@@ -1,5 +1,5 @@
 # QUANT FOUNDS — نظام تحليل تداول كمّي متعدد المحركات
-[![tests](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml/badge.svg)](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml) [![Release](https://img.shields.io/badge/release-v1.1.0-blue)](https://github.com/trolaxa-oss/quant-founds/releases)
+[![tests](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml/badge.svg)](https://github.com/trolaxa-oss/quant-founds/actions/workflows/tests.yml) [![Release](https://img.shields.io/badge/release-v1.1.1-blue)](https://github.com/trolaxa-oss/quant-founds/releases)
 
 الهيكل الأولي (Skeleton) لمشروع **QUANT FOUNDS** بلغة بايثون، مبني حسب وثيقة المخطط (Blueprint) الإصدار 1.0. المشروع يعتمد على **مكتبة بايثون القياسية فقط** (بدون أي اعتماديات خارجية).
 
@@ -161,7 +161,7 @@ print(result.report["win_rate"], result.report["profit_factor"])
 - ✔ المرحلة 0: هيكل المشروع والواجهة الموحدة والإعدادات.
 - ✔ موفّرات البيانات الحقيقية: csv / binance (عام) / جسر MT5 محلي مع مصادقة توكن وعدم تمرير الشموع الحية
 - ✔ المراحل 1–7: المحركات التحليلية، طبقة القرار، المخاطر، التنفيذ، الجلسات، الفلاتر، لوحة العرض، التنبيهات، والتقييم الإحصائي.
-- ✔ الاختبارات: 78 اختباراً (وحدات + smoke + runtime + AI + لوحة + تقارير وتحقق) تشمل: جودة البيانات، أولوية SL في الشموع الملتبسة، حد الخسارة اليومي، Kill-Switch، عدم وجود قرار قبل فترة التهيئة.
+- ✔ الاختبارات: 85 اختباراً (وحدات + smoke + runtime + AI + لوحة + تقارير وتحقق) تشمل: جودة البيانات، أولوية SL في الشموع الملتبسة، حد الخسارة اليومي، Kill-Switch، عدم وجود قرار قبل فترة التهيئة.
 - ✅ التشغيل الحي: حلقة بيانات حيّة + تداول ورقي كامل (قرار ← خطة ← مخاطر ← تنفيذ ← إدارة صفقة) مع سجل قرارات وتنبيهات وإشعارات خارجية اختيارية
 - ✅ محرك AI الأونلاين (تعلّم من نتائج الصفقات الورقية + بوابة احتمالية اختيارية) ولوحة مراقبة HTML محلية
 - ○ قادم (اختياري): دمج نماذج ML خارجية مدّربة (ONNX/sklearn عند إضافة اعتماديات)،  وواجهات رسومية أعمق.
