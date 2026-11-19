@@ -18,3 +18,36 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Run unit + smoke tests
         run: python -m unittest discover -s tests -v
+
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Deterministic backtest round-trip
+        run: python scripts/run_backtest.py --seed-data --out runs/smoke
+      - name: Assert report artifacts exist
+        run: |
+          python - <<'PY'
+          import json, os
+
+          base = "runs/smoke"
+          for name in ("summary.json", "trades.csv", "decisions.jsonl", "report.html"):
+              path = os.path.join(base, name)
+              assert os.path.exists(path) and os.path.getsize(path) > 0, f"missing artifact: {path}"
+
+          with open(os.path.join(base, "summary.json")) as fh:
+              summary = json.load(fh)
+          for key in ("monte_carlo", "walk_forward"):
+              assert key in summary, f"missing summary section: {key}"
+
+          with open(os.path.join(base, "trades.csv")) as fh:
+              rows = fh.read().strip().splitlines()
+          assert len(rows) >= 1, "empty trades.csv"
+          print("smoke ok:", len(rows) - 1, "trades")
+          PY
