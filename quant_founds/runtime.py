@@ -25,6 +25,7 @@ from quant_founds.engines import (AiIntelligence, DataEngine,
 from quant_founds.execution import BrokerConfig, PaperBroker
 from quant_founds.journal import Journal, utc_now
 from quant_founds.notify import NotifierChain
+from quant_founds.online_ai import OnlineLogit
 from quant_founds.planning import build_plan
 from quant_founds.risk_engine import RiskEngine
 from quant_founds.sessions import SessionEngine
@@ -81,6 +82,7 @@ class LiveWatcher:
         self.signals = SignalDecisionEngine(cfg)
         self.notifiers = notifiers if notifiers is not None else NotifierChain()
         self.run_dir = run_dir
+        self._last_ai_features: dict | None = None
         self.journal_path = os.path.join(run_dir, "decisions.jsonl")
         os.makedirs(run_dir, exist_ok=True)
 
@@ -130,6 +132,9 @@ class LiveWatcher:
         results = {}
         for eng in self.engines():
             results[eng.engine_id] = eng.analyze(ctx)
+        self._last_ai_features = {eid: getattr(r, "score", None)
+                                  for eid, r in results.items()
+                                  if eid != "sessions"}
         results.pop("ai", None)
         self.n_bars_seen += 1
         self._last_ctx = ctx
@@ -192,12 +197,23 @@ class LivePaperRunner(LiveWatcher):
     def __init__(self, cfg: Config, provider, poll_seconds: float = 30.0,
                  history_bars: int = 400, run_dir: str = "runs/live_paper",
                  initial_balance: float = 10_000.0, notifiers=None,
-                 news_engine=None):
+                 news_engine=None, ai_model=None, ai_gate: bool = False,
+                 ai_min_probability: float = 0.5, ai_min_samples: int = 30):
         super().__init__(cfg, provider, poll_seconds=poll_seconds,
                          history_bars=history_bars, run_dir=run_dir,
                          notifiers=notifiers)
         self.journal = Journal(run_dir)
         self.news_engine = news_engine or self.news
+        self.ai_gate = ai_gate
+        self.ai_min_probability = ai_min_probability
+        self.ai_min_samples = ai_min_samples
+        self.ai_model_path = os.path.join(run_dir, "ai_model.json")
+        if ai_gate and ai_model is None:
+            ai_model = OnlineLogit.load(self.ai_model_path) or OnlineLogit()
+        self.ai_model = ai_model
+        if ai_gate:
+            self.ai.model = ai_model
+        self.open_ai_features: dict | None = None
         self.account = Account(balance=initial_balance, equity=initial_balance,
                                peak_equity=initial_balance)
         self.broker = PaperBroker(BrokerConfig(
@@ -254,6 +270,12 @@ class LivePaperRunner(LiveWatcher):
             self.risk.register_loss(self.bar_index)
         else:
             self.risk.register_win()
+        if self.ai_gate and self.ai_model is not None \
+                and self.open_ai_features is not None:
+            self.ai_model.update(self.open_ai_features,
+                                 1.0 if trade.realized_pnl >= 0 else 0.0)
+            self.ai_model.save(self.ai_model_path)
+        self.open_ai_features = None
         self.signals.machine.reset()
         self.notifiers.send(
             f"{self.cfg.data.symbol} trade closed",
@@ -284,6 +306,16 @@ class LivePaperRunner(LiveWatcher):
             decision.signal_id += "-rejected"
             self._journal(decision)
             return
+        if self.ai_gate and self.ai_model is not None \
+                and self.ai_model.n_updates >= self.ai_min_samples:
+            prob = self.ai_model.probability(self._last_ai_features or {})
+            decision.notes.append(f"ai_prob={prob:.2f}")
+            if prob < self.ai_min_probability:
+                decision.notes.append("ai_gate_rejected")
+                decision.signal_id += "-ai-gate"
+                self._journal(decision)
+                return
+        self.open_ai_features = self._last_ai_features
         decision.state = SignalState.ENTRY_READY
         decision.notes.append("risk_approved")
         self.broker.submit(plan, rd.position_size)
@@ -295,7 +327,6 @@ class LivePaperRunner(LiveWatcher):
                             f"{plan.side.value} size={rd.position_size:.2f} "
                             f"sl={plan.stop_loss}")
         self._journal(decision)
-
     def snapshot_summary(self) -> dict:
         from quant_founds.reporting import performance_report
 
